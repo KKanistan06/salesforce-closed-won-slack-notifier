@@ -22,16 +22,22 @@ service "/data/OpportunityChangeEvent" on salesforceListener {
             // Check if StageName was changed in this update
             string changedStageName = extractStageName(payload);
 
-            // Only proceed if StageName was changed to "Closed Won"
-            if changedStageName != "Closed Won" {
+            // Only proceed if StageName was changed to Closed Won
+            if changedStageName != STAGE_CLOSED_WON {
                 return;
             }
 
             string opportunityId = extractOpportunityId(payload);
 
-            OpportunityDetails opportunityDetails = check fetchOpportunityDetails(opportunityId);
+            // Guard: skip if recordId metadata missing
+            if opportunityId == "" {
+                log:printInfo("Event missing recordId; skipping processing");
+                return;
+            }
 
-            if !meetsMinimumAmount(opportunityDetails.amount, minDealAmount) {
+            OpportunityDetails opportunityDetails = check queryOpportunity(opportunityId);
+
+            if opportunityDetails.amount < minDealAmount {
                 return;
             }
 
@@ -53,8 +59,8 @@ service "/data/OpportunityChangeEvent" on salesforceListener {
             log:printInfo("Notification sent successfully", opportunityId = opportunityId);
 
         } on fail error err {
-            log:printError("Error processing opportunity", 'error = err);
-            return error("unhandled error", err);
+            log:printError("Failed to process opportunity update", 'error = err);
+            return err;
         }
     }
 

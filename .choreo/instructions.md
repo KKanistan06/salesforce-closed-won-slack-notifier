@@ -5,7 +5,6 @@
 - Filters opportunities based on configurable criteria (deal size, type, owner)
 - Routes notifications to different Slack channels based on deal size tiers
 - Sends formatted Slack notifications with deal details and owner mentions
-- Includes retry logic and webhook fallback for reliable message delivery
 
 <details>
 
